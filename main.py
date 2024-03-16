@@ -64,6 +64,10 @@ def suggest_quote():
         file.write(suggestion)
     return redirect(url_for('subscribe'))
 
+@app.route('/test')
+def test_route():
+    return "Test route it is testing!"
+
 if __name__ == '__main__':
     atexit.register(lambda: schedule.clear())  # Clear the scheduler when the app exits
     app.run(debug=True)
