@@ -1,17 +1,18 @@
 from flask import Flask, render_template, request, redirect, url_for
 import threading
 import atexit
-from util import load_random_quote
+from util import load_random_quote, get_postgres_connection
 from mail import send_email
 import schedule
 import time
 from datetime import datetime, date
 from util import generate_email_body
-import sqlite3
+import psycopg2
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 def send_daily_quote():
+    print("Preparing Quote")
     quote = load_random_quote()
     if quote:
         print(f"Today's random quote is \n\n{quote}\n\n")
@@ -20,11 +21,12 @@ def send_daily_quote():
         today = date.today().strftime("%B %d, %Y")
         subject = f"Daily Baba Quote {today}"
 
-        # Connect to the database to fetch subscribers
-        conn = sqlite3.connect('app.db')
+        # Connect to the PostgreSQL database to fetch subscribers
+        conn = get_postgres_connection()
         cur = conn.cursor()
         cur.execute('SELECT email FROM subscribers')
         subscribers = [email[0] for email in cur.fetchall()]
+        cur.close()
         conn.close()
 
         print("connection was closed")
@@ -38,7 +40,7 @@ def send_daily_quote():
 
 
 def run_scheduler():
-    schedule.every().day.at("10:18").do(send_daily_quote)
+    schedule.every().day.at("10:58").do(send_daily_quote)
     
     while True:
         schedule.run_pending()
@@ -54,15 +56,17 @@ def subscribe():
     if request.method == 'POST':
         email = request.form.get('email')
         if email:
+            conn = get_postgres_connection()
+            cur = conn.cursor()
             try:
-                conn = sqlite3.connect('app.db')
-                cur = conn.cursor()
-                cur.execute('INSERT INTO subscribers (email) VALUES (?)', (email,))
+                cur.execute('INSERT INTO subscribers (email) VALUES (%s)', (email,))
                 conn.commit()
                 print(f"SUBSCRIPTION: Adding {email}")
-            except sqlite3.IntegrityError:
+            except psycopg2.IntegrityError:
+                conn.rollback()  # Roll back the transaction on error
                 print("Email already exists.")
             finally:
+                cur.close()
                 conn.close()
             return redirect(url_for('subscribe'))
     return render_template('subscribe.html')
@@ -70,21 +74,31 @@ def subscribe():
 
 @app.route('/suggest_quote', methods=['POST'])
 def suggest_quote():
-    print("SUGGESTION:")
     quote_link = request.form.get('quoteLink', '')
     quote_text = request.form.get('quoteText', '')
     author = request.form.get('author', 'Unknown')
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    suggestion =  f"SUGGESTION: Time: {timestamp}, Link: {quote_link}, Quote: {quote_text}, Author: {author}\n"
+    suggestion = f"SUGGESTION: Time: {timestamp}, Link: {quote_link}, Quote: {quote_text}, Author: {author}\n"
     print(suggestion)
 
-    conn = sqlite3.connect('app.db')
+    # Connect to the PostgreSQL database
+    conn = get_postgres_connection()
     cur = conn.cursor()
-    cur.execute('INSERT INTO suggested_quotes (quote_link, quote_text, author) VALUES (?, ?, ?)',
-                (quote_link, quote_text, author))
-    conn.commit()
-    conn.close()
+
+    try:
+        # Insert the suggestion into the suggested_quotes table
+        cur.execute('INSERT INTO suggested_quotes (quote_link, quote_text, author, timestamp) VALUES (%s, %s, %s, %s)',
+                    (quote_link, quote_text, author, timestamp))
+        conn.commit()
+    except Exception as e:
+        # Handle any exceptions, such as integrity errors for duplicates, etc.
+        conn.rollback()
+        print(f"Error submitting suggestion: {e}")
+    finally:
+        # Ensure the database connection is closed
+        cur.close()
+        conn.close()
 
     return redirect(url_for('subscribe'))
 

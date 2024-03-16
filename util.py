@@ -1,15 +1,38 @@
-import sqlite3
+import psycopg2
+import os
+
+def get_postgres_connection():
+    return psycopg2.connect(
+        dbname=os.getenv('PGDATABASE'),
+        user=os.getenv('PGUSER'),
+        password=os.getenv('PGPASSWORD'),
+        host=os.getenv('PGHOST'),
+        port=os.getenv('PGPORT', '5432'),
+        sslmode='require'  # Correctly set sslmode here
+    )
+
 
 def load_random_quote():
-    conn = sqlite3.connect('app.db')
+    # Connect to the PostgreSQL database
+    conn = get_postgres_connection()
     cur = conn.cursor()
-    cur.execute('SELECT quote, source, philosophy FROM quotes ORDER BY RANDOM() LIMIT 1')
-    quote = cur.fetchone()
-    conn.close()
-    if quote:
-        return {'quote': quote[0], 'source': quote[1], 'philosophy': quote[2]}
-    else:
+    
+    try:
+        # Fetch a random quote from the quotes table
+        cur.execute('SELECT quote, source, philosophy FROM quotes ORDER BY RANDOM() LIMIT 1')
+        quote_data = cur.fetchone()
+
+        if quote_data:
+            return {'quote': quote_data[0], 'source': quote_data[1], 'philosophy': quote_data[2]}
+        else:
+            return None
+    except Exception as e:
+        print(f"Error loading random quote: {e}")
         return None
+    finally:
+        cur.close()
+        conn.close()
+
 
 
 def generate_email_body(quote, source):
