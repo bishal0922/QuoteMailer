@@ -1,7 +1,7 @@
 # QuoteMailer
 
 `babaquotes.vercel.app`
-![QuoteMailer](https://babaquotes.vercel.app)
+![](https://babaquotes.vercel.app)
 
 QuoteMailer is a simple web application that sends a daily email to subscribers with a random quote from a database of quotes. The application is built using Python, Flask, and PostgreSQL.
 
