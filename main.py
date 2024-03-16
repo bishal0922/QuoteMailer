@@ -40,7 +40,7 @@ def send_daily_quote():
 
 
 def run_scheduler():
-    schedule.every().day.at("10:58").do(send_daily_quote)
+    schedule.every().day.at("12:00").do(send_daily_quote)
     
     while True:
         schedule.run_pending()
