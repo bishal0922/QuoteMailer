@@ -1,10 +1,16 @@
-import json
-import random
+import sqlite3
 
 def load_random_quote():
-    with open('quotes.json', 'r', encoding='utf-8') as file:
-        quotes = json.load(file)
-    return random.choice(quotes)
+    conn = sqlite3.connect('app.db')
+    cur = conn.cursor()
+    cur.execute('SELECT quote, source, philosophy FROM quotes ORDER BY RANDOM() LIMIT 1')
+    quote = cur.fetchone()
+    conn.close()
+    if quote:
+        return {'quote': quote[0], 'source': quote[1], 'philosophy': quote[2]}
+    else:
+        return None
+
 
 def generate_email_body(quote, source):
     body = f"""
