@@ -70,4 +70,4 @@ def test_route():
 
 if __name__ == '__main__':
     atexit.register(lambda: schedule.clear())  # Clear the scheduler when the app exits
-    app.run(debug=True)
+    app.run()
