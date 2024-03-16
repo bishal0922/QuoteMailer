@@ -25,7 +25,7 @@ def send_daily_quote():
         send_email(subject, message, subscribers)
 
 def run_scheduler():
-    schedule.every().day.at("21:39").do(send_daily_quote)
+    schedule.every().day.at("08:00").do(send_daily_quote)
     
     while True:
         schedule.run_pending()
