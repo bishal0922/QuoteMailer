@@ -2,13 +2,8 @@ import psycopg2
 import os
 
 def get_postgres_connection():
-    return psycopg2.connect(
-        dbname=os.getenv('PGDATABASE'),
-        user=os.getenv('PGUSER'),
-        password=os.getenv('PGPASSWORD'),
-        host=os.getenv('PGHOST'),
-        port=os.getenv('PGPORT', '5432')
-    )
+    database_url = os.getenv('DATABASE_URL')
+    return psycopg2.connect(database_url)
 
 
 def load_random_quote():
