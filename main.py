@@ -8,7 +8,7 @@ import time
 from datetime import datetime, date
 from util import generate_email_body
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 def send_daily_quote():
     quote = load_random_quote()
@@ -25,7 +25,7 @@ def send_daily_quote():
         send_email(subject, message, subscribers)
 
 def run_scheduler():
-    schedule.every().day.at("21:24").do(send_daily_quote)
+    schedule.every().day.at("21:39").do(send_daily_quote)
     
     while True:
         schedule.run_pending()

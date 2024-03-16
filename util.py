@@ -50,7 +50,7 @@ def generate_email_body(quote, source):
             <p class="quote">{quote}</p>
             <p class="source">- {source}</p>
         </div>
-        <p class="footer">Sent with love by Baba</p>
+        <p class="footer">Sent with love by Baba Bishal ❤️</p>
     </body>
     </html>
     """

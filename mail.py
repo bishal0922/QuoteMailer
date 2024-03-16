@@ -31,4 +31,3 @@ def send_email(subject, message, to_emails):
     text = msg.as_string()  # Convert the message to a string
     server.sendmail(smtp_user, to_emails, text)  # Send the email
     server.quit()  # Close the connection
-
