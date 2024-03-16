@@ -7,8 +7,7 @@ def get_postgres_connection():
         user=os.getenv('PGUSER'),
         password=os.getenv('PGPASSWORD'),
         host=os.getenv('PGHOST'),
-        port=os.getenv('PGPORT', '5432'),
-        sslmode='require'  # Correctly set sslmode here
+        port=os.getenv('PGPORT', '5432')
     )
 
 
