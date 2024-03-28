@@ -15,5 +15,11 @@
     "env": {
       "FLASK_ENV": "production",
       "FLASK_APP": "main.py"
-    }
+    },
+    "crons": [
+      {
+        "path": "/api/send_daily_quote",
+        "schedule": "0 12 * * *"
+      }
+    ]
   }

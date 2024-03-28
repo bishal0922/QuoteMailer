@@ -1,13 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for
-import threading
-import atexit
+from flask import Flask, render_template, request, redirect, url_for, abort
 from util import load_random_quote, get_postgres_connection
 from mail import send_email
-import schedule
-import time
 from datetime import datetime, date
 from util import generate_email_body
 import psycopg2
+import os
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 
@@ -37,18 +34,6 @@ def send_daily_quote():
     else:
         print("No quote found for today.")
 
-
-
-def run_scheduler():
-    schedule.every().day.at("12:00").do(send_daily_quote)
-    
-    while True:
-        schedule.run_pending()
-        time.sleep(60)
-
-scheduler_thread = threading.Thread(target=run_scheduler)
-scheduler_thread.daemon = True
-scheduler_thread.start()
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -106,6 +91,19 @@ def suggest_quote():
 def test_route():
     return "Test route it is testing!"
 
+@app.route('/api/send_daily_quote')
+def send_daily_quote_route():
+    # Extract the token from the Authorization header
+    auth_header = request.headers.get('Authorization')
+    token = auth_header.split(' ')[1] if auth_header else None
+    
+    # Verify the token
+    if not token or token != os.environ.get('CRON_SECRET'):
+        # If the token is missing or incorrect, reject the request
+        abort(403)
+    
+    send_daily_quote()
+    return 'Daily quote sent!'
+
 if __name__ == '__main__':
-    atexit.register(lambda: schedule.clear())  # Clear the scheduler when the app exits
     app.run()
